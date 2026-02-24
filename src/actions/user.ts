@@ -55,9 +55,25 @@ export async function updateOnboarding(data: {
   if (!userId) throw new Error("No autenticado")
 
   try {
-    const dbUser = await prisma.user.update({
+    // Get Clerk user data to sync if needed
+    const clerkUser = await currentUser()
+    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? ""
+    const name = `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() || null
+
+    // Use upsert to create user if not exists, update if exists
+    const dbUser = await prisma.user.upsert({
       where: { clerkId: userId },
-      data: {
+      update: {
+        interests: data.interests,
+        preferredFormats: data.preferredFormats,
+        preferredTone: data.preferredTone,
+        preferredLanguage: data.preferredLanguage,
+        onboardingCompleted: true,
+      },
+      create: {
+        clerkId: userId,
+        email,
+        name,
         interests: data.interests,
         preferredFormats: data.preferredFormats,
         preferredTone: data.preferredTone,
@@ -87,9 +103,25 @@ export async function updateProfile(data: {
   if (!userId) throw new Error("No autenticado")
 
   try {
-    const dbUser = await prisma.user.update({
+    // Get Clerk user data to sync if needed
+    const clerkUser = await currentUser()
+    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? ""
+    const defaultName = `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() || null
+
+    // Use upsert to create user if not exists, update if exists
+    const dbUser = await prisma.user.upsert({
       where: { clerkId: userId },
-      data,
+      update: data,
+      create: {
+        clerkId: userId,
+        email,
+        name: data.name ?? defaultName,
+        interests: data.interests ?? [],
+        preferredFormats: data.preferredFormats ?? [],
+        preferredTone: data.preferredTone ?? "casual",
+        preferredLanguage: data.preferredLanguage ?? "es",
+        ...data,
+      },
     })
 
     revalidatePath("/settings")
