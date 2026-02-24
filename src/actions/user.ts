@@ -54,19 +54,25 @@ export async function updateOnboarding(data: {
   const { userId } = await auth()
   if (!userId) throw new Error("No autenticado")
 
-  const dbUser = await prisma.user.update({
-    where: { clerkId: userId },
-    data: {
-      interests: data.interests,
-      preferredFormats: data.preferredFormats,
-      preferredTone: data.preferredTone,
-      preferredLanguage: data.preferredLanguage,
-      onboardingCompleted: true,
-    },
-  })
+  try {
+    const dbUser = await prisma.user.update({
+      where: { clerkId: userId },
+      data: {
+        interests: data.interests,
+        preferredFormats: data.preferredFormats,
+        preferredTone: data.preferredTone,
+        preferredLanguage: data.preferredLanguage,
+        onboardingCompleted: true,
+      },
+    })
 
-  revalidatePath("/dashboard")
-  return dbUser
+    revalidatePath("/dashboard")
+    return dbUser
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+    console.error("[updateOnboarding] Error:", errorMessage)
+    throw new Error(`Error al guardar preferencias: ${errorMessage}`)
+  }
 }
 
 // Update user profile
@@ -80,13 +86,19 @@ export async function updateProfile(data: {
   const { userId } = await auth()
   if (!userId) throw new Error("No autenticado")
 
-  const dbUser = await prisma.user.update({
-    where: { clerkId: userId },
-    data,
-  })
+  try {
+    const dbUser = await prisma.user.update({
+      where: { clerkId: userId },
+      data,
+    })
 
-  revalidatePath("/settings")
-  return dbUser
+    revalidatePath("/settings")
+    return dbUser
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+    console.error("[updateProfile] Error:", errorMessage)
+    throw new Error(`Error al actualizar perfil: ${errorMessage}`)
+  }
 }
 
 // Check if user has completed onboarding

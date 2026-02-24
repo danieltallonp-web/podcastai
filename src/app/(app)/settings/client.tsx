@@ -77,8 +77,10 @@ export function SettingsClient({ user }: { user: UserProps }) {
       try {
         await updateProfile({ name: name || undefined, interests })
         toast.success("Perfil actualizado correctamente")
-      } catch {
-        toast.error("Error al actualizar el perfil")
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error al actualizar el perfil"
+        console.error("[settings] Error saving profile:", error)
+        toast.error(errorMessage)
       }
     })
   }
@@ -92,8 +94,10 @@ export function SettingsClient({ user }: { user: UserProps }) {
           preferredLanguage,
         })
         toast.success("Preferencias actualizadas correctamente")
-      } catch {
-        toast.error("Error al actualizar las preferencias")
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error al actualizar las preferencias"
+        console.error("[settings] Error saving preferences:", error)
+        toast.error(errorMessage)
       }
     })
   }

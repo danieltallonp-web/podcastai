@@ -68,8 +68,10 @@ export default function OnboardingPage() {
       })
       toast.success("¡Bienvenido a PodcastAI!")
       router.push("/dashboard")
-    } catch {
-      toast.error("Error al guardar preferencias")
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido al guardar preferencias"
+      console.error("[onboarding] Error saving preferences:", error)
+      toast.error(errorMessage || "Error al guardar preferencias")
     } finally {
       setLoading(false)
     }
