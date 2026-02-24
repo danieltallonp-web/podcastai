@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==========================================
+// MODELOS
+// ==========================================
+
+model User {
+  id                         String    @id @default(uuid())
+  clerkId                    String    @unique
+  email                      String    @unique
+  name                       String?
+  imageUrl                   String?
+  plan                       Plan      @default(FREE)
+  onboardingCompleted        Boolean   @default(false)
+  interests                  String[]  @default([])
+  preferredFormats           String[]  @default([])
+  preferredTone              String?
+  preferredLanguage          String    @default("es")
+  podcastsGeneratedThisMonth Int       @default(0)
+  stripeCustomerId           String?   @unique
+  stripeSubscriptionId       String?   @unique
+  stripePriceId              String?
+  stripeCurrentPeriodEnd     DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  podcasts         Podcast[]
+  presets          Preset[]
+  voiceProfiles    VoiceProfile[]
+  playlists        Playlist[]
+  recommendations  Recommendation[]
+  listeningEvents  ListeningEvent[]
+  connectedSources ConnectedSource[]
+}
+
+model Podcast {
+  id              String        @id @default(uuid())
+  userId          String
+  title           String
+  description     String?
+  prompt          String
+  config          Json
+  presetId        String?
+  status          PodcastStatus @default(QUEUED)
+  script          Json?
+  audioUrl        String?
+  transcriptUrl   String?
+  videoUrl        String?
+  durationSeconds Int?
+  format          PodcastFormat
+  language        String        @default("es")
+  listenCount     Int           @default(0)
+  completedCount  Int           @default(0)
+  isFavorite      Boolean       @default(false)
+  sourceDocuments Json?
+  generationLog   Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preset          Preset?         @relation(fields: [presetId], references: [id])
+  listeningEvents ListeningEvent[]
+  playlistItems   PlaylistItem[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+}
+
+model Preset {
+  id          String   @id @default(uuid())
+  userId      String?
+  name        String
+  description String?
+  icon        String?
+  config      Json
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  podcasts Podcast[]
+
+  @@index([userId])
+  @@index([isSystem])
+}
+
+model VoiceProfile {
+  id                 String   @id @default(uuid())
+  userId             String
+  name               String
+  elevenLabsVoiceId  String
+  isCloned           Boolean  @default(false)
+  cloneAudioUrl      String?
+  defaultSpeed       Float    @default(1.0)
+  defaultPersonality String?
+  previewUrl         String?
+  labels             Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Playlist {
+  id          String         @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items PlaylistItem[]
+
+  @@index([userId])
+}
+
+model PlaylistItem {
+  id         String   @id @default(uuid())
+  playlistId String
+  podcastId  String
+  position   Int
+  addedAt    DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  podcast  Podcast  @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, podcastId])
+  @@index([playlistId, position])
+}
+
+model Recommendation {
+  id                 String               @id @default(uuid())
+  userId             String
+  title              String
+  description        String?
+  suggestedConfig    Json
+  reason             String?
+  status             RecommendationStatus @default(PENDING)
+  generatedPodcastId String?
+  createdAt          DateTime             @default(now())
+  expiresAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model ListeningEvent {
+  id                      String    @id @default(uuid())
+  userId                  String
+  podcastId               String
+  startedAt               DateTime  @default(now())
+  endedAt                 DateTime?
+  durationListenedSeconds Int       @default(0)
+  completed               Boolean   @default(false)
+  feedback                Feedback?
+  createdAt               DateTime  @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  podcast Podcast @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([podcastId])
+}
+
+model ConnectedSource {
+  id                 String     @id @default(uuid())
+  userId             String
+  type               SourceType
+  url                String
+  name               String
+  autoGenerate       Boolean    @default(false)
+  autoGenerateConfig Json?
+  lastFetchedAt      DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Plan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum PodcastStatus {
+  QUEUED
+  RESEARCHING
+  SCRIPTING
+  GENERATING_AUDIO
+  POST_PRODUCING
+  READY
+  FAILED
+}
+
+enum PodcastFormat {
+  MONOLOGUE
+  CONVERSATION
+  DEBATE
+  NARRATION
+  CLASS
+  ROUNDTABLE
+  INTERVIEW
+  INTERACTIVE
+}
+
+enum RecommendationStatus {
+  PENDING
+  GENERATED
+  DISMISSED
+}
+
+enum Feedback {
+  LIKE
+  DISLIKE
+}
+
+enum SourceType {
+  RSS
+  NEWSLETTER
+}
