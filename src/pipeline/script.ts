@@ -9,7 +9,7 @@ function getPromptForConfig(config: PodcastConfig, researchContext: string): str
   const baseParams = {
     topic: config.prompt,
     duration: config.duration,
-    tone: config.tone.join(", "),
+    tone: config.tone,
     language: config.language,
     numberOfVoices: config.voices.length || 1,
     researchContext: researchContext || undefined,
