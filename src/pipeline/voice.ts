@@ -5,7 +5,8 @@ import type { PodcastScript, PodcastConfig, ScriptBlock } from "@/types"
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
 
 // Maximum concurrent speech synthesis requests
-const CONCURRENCY_LIMIT = 3
+// Set to 1 for Free Tier ElevenLabs (max 2 concurrent, minus 1 for safety)
+const CONCURRENCY_LIMIT = 1
 
 /**
  * Simple semaphore for limiting concurrent async operations.
