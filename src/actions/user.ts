@@ -57,8 +57,12 @@ export async function updateOnboarding(data: {
   try {
     // Get Clerk user data to sync if needed
     const clerkUser = await currentUser()
-    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? ""
-    const name = `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() || null
+    if (!clerkUser) throw new Error("Usuario de Clerk no encontrado")
+
+    const email = clerkUser.emailAddresses[0]?.emailAddress
+    if (!email) throw new Error("Email no encontrado en Clerk")
+
+    const name = `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || null
 
     // Use upsert to create user if not exists, update if exists
     const dbUser = await prisma.user.upsert({
@@ -105,8 +109,12 @@ export async function updateProfile(data: {
   try {
     // Get Clerk user data to sync if needed
     const clerkUser = await currentUser()
-    const email = clerkUser?.emailAddresses[0]?.emailAddress ?? ""
-    const defaultName = `${clerkUser?.firstName ?? ""} ${clerkUser?.lastName ?? ""}`.trim() || null
+    if (!clerkUser) throw new Error("Usuario de Clerk no encontrado")
+
+    const email = clerkUser.emailAddresses[0]?.emailAddress
+    if (!email) throw new Error("Email no encontrado en Clerk")
+
+    const defaultName = `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || null
 
     // Use upsert to create user if not exists, update if exists
     const dbUser = await prisma.user.upsert({
@@ -120,7 +128,6 @@ export async function updateProfile(data: {
         preferredFormats: data.preferredFormats ?? [],
         preferredTone: data.preferredTone ?? "casual",
         preferredLanguage: data.preferredLanguage ?? "es",
-        ...data,
       },
     })
 
