@@ -33,7 +33,7 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 export function PlayerBar() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState(0)
-  const dragValueRef = useRef(0)
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const {
     podcast,
@@ -52,15 +52,25 @@ export function PlayerBar() {
 
   const { seek } = usePlayer()
 
-  // When user finishes dragging, seek to the new position
-  useEffect(() => {
-    if (!isDragging && dragValue >= 0 && duration > 0) {
-      console.log("✋ User finished dragging. dragValue:", dragValue, "duration:", duration)
-      const seekTime = (dragValue / 100) * duration
-      console.log("🎯 Seeking to:", seekTime)
-      seek(seekTime)
-    }
-  }, [isDragging, dragValue, duration, seek])
+  // Handle slider value changes (onValueChange)
+  const handleSliderChange = (value: number[]) => {
+    console.log("📊 onValueChange:", value[0])
+    setIsDragging(true)
+    setDragValue(value[0])
+
+    // Clear any pending seek
+    if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current)
+
+    // Seek after 100ms of no changes (debounce)
+    seekTimeoutRef.current = setTimeout(() => {
+      if (duration > 0) {
+        const seekTime = (value[0] / 100) * duration
+        console.log("✋ Slider release. Seeking to:", seekTime)
+        seek(seekTime)
+      }
+      setIsDragging(false)
+    }, 100)
+  }
 
   const isVisible = !!podcast
 
@@ -126,27 +136,7 @@ export function PlayerBar() {
             max={100}
             step={0.1}
             className="cursor-pointer"
-            onValueChange={(v) => {
-              console.log("📊 onValueChange:", v[0])
-              dragValueRef.current = v[0]
-              setDragValue(v[0])
-            }}
-            onMouseDown={() => {
-              console.log("🖱️ Mouse down on slider")
-              setIsDragging(true)
-            }}
-            onMouseUp={() => {
-              console.log("🖱️ Mouse up on slider")
-              setIsDragging(false)
-            }}
-            onTouchStart={() => {
-              console.log("👆 Touch start on slider")
-              setIsDragging(true)
-            }}
-            onTouchEnd={() => {
-              console.log("👆 Touch end on slider")
-              setIsDragging(false)
-            }}
+            onValueChange={handleSliderChange}
           />
         </div>
 
