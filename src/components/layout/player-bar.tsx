@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import {
@@ -30,6 +31,10 @@ function formatDuration(seconds: number): string {
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 export function PlayerBar() {
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragValue, setDragValue] = useState(0)
+  const dragValueRef = useRef(0)
+
   const {
     podcast,
     isPlaying,
@@ -47,11 +52,22 @@ export function PlayerBar() {
 
   const { seek } = usePlayer()
 
+  // When user finishes dragging, seek to the new position
+  useEffect(() => {
+    if (!isDragging && dragValue >= 0 && duration > 0) {
+      console.log("✋ User finished dragging. dragValue:", dragValue, "duration:", duration)
+      const seekTime = (dragValue / 100) * duration
+      console.log("🎯 Seeking to:", seekTime)
+      seek(seekTime)
+    }
+  }, [isDragging, dragValue, duration, seek])
+
   const isVisible = !!podcast
 
   if (!isVisible) return null
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
+  const displayProgress = isDragging ? dragValue : progressPercent
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md lg:left-64">
@@ -106,14 +122,30 @@ export function PlayerBar() {
         {/* Progress bar */}
         <div className="hidden flex-1 md:block">
           <Slider
-            value={[progressPercent]}
+            value={[displayProgress]}
             max={100}
             step={0.1}
             className="cursor-pointer"
             onValueChange={(v) => {
-              if (duration > 0) {
-                seek((v[0] / 100) * duration)
-              }
+              console.log("📊 onValueChange:", v[0])
+              dragValueRef.current = v[0]
+              setDragValue(v[0])
+            }}
+            onMouseDown={() => {
+              console.log("🖱️ Mouse down on slider")
+              setIsDragging(true)
+            }}
+            onMouseUp={() => {
+              console.log("🖱️ Mouse up on slider")
+              setIsDragging(false)
+            }}
+            onTouchStart={() => {
+              console.log("👆 Touch start on slider")
+              setIsDragging(true)
+            }}
+            onTouchEnd={() => {
+              console.log("👆 Touch end on slider")
+              setIsDragging(false)
             }}
           />
         </div>
