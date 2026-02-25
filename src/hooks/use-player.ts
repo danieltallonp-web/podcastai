@@ -89,43 +89,18 @@ export function usePlayer() {
   }, [])
 
   // Sync store changes → audio element
-  // Download audio as blob for better seeking support
+  // Use direct URL from Supabase (supports HTTP range requests for seeking)
   useEffect(() => {
     const audio = getAudio()
     if (!store.podcast?.audioUrl) return
 
-    // Set loading state
-    store.setIsLoading(true)
+    console.log("🎧 Setting audio source:", store.podcast?.audioUrl)
 
-    const fetchAndPlayAudio = async () => {
-      try {
-        console.log("📥 Downloading audio file:", store.podcast?.audioUrl)
-        const response = await fetch(store.podcast!.audioUrl)
+    // Use URL directly - Supabase supports byte-range requests for seeking
+    audio.src = store.podcast!.audioUrl
+    audio.load()
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch audio: ${response.status}`)
-        }
-
-        const blob = await response.blob()
-        console.log("✅ Audio downloaded:", blob.size, "bytes")
-
-        // Create blob URL for better seeking
-        const blobUrl = URL.createObjectURL(blob)
-        audio.src = blobUrl
-        audio.load()
-
-        console.log("🔗 Blob URL created and set")
-        store.setIsLoading(false)
-      } catch (error) {
-        console.error("❌ Error downloading audio:", error)
-        // Fallback to direct URL
-        audio.src = store.podcast!.audioUrl
-        audio.load()
-        store.setIsLoading(false)
-      }
-    }
-
-    fetchAndPlayAudio()
+    store.setIsLoading(false)
   }, [store.podcast?.audioUrl])
 
   useEffect(() => {
