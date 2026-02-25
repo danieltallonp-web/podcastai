@@ -1,10 +1,12 @@
 "use client"
 
+import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import { usePlayerStore } from "@/stores/player-store"
+import { usePlayer } from "@/hooks/use-player"
 import { GenerationProgress } from "@/components/create/generation-progress"
 import { PODCAST_FORMATS, STATUS_LABELS } from "@/lib/constants"
 import {
@@ -39,16 +41,32 @@ interface PodcastData {
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
+  const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
 export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
-  const { podcast: currentPodcast, isPlaying, setPodcast, play, pause, togglePlay } =
+  const { podcast: currentPodcast, isPlaying, currentTime, duration, setPodcast, play, pause, togglePlay } =
     usePlayerStore()
+  const { seek } = usePlayer()
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const isThisPodcastPlaying =
     currentPodcast?.id === podcast.id && isPlaying
+
+  const isDuration = currentPodcast?.id === podcast.id ? duration : (podcast.durationSeconds ?? 0)
+  const isCurrent = currentPodcast?.id === podcast.id ? currentTime : 0
+  const progressPercent = isDuration > 0 ? (isCurrent / isDuration) * 100 : 0
+
+  const handleSeek = (value: number[]) => {
+    if (isDuration > 0) {
+      const seekTime = (value[0] / 100) * isDuration
+      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current)
+      seekTimeoutRef.current = setTimeout(() => {
+        seek(seekTime)
+      }, 100)
+    }
+  }
 
   const formatInfo = PODCAST_FORMATS.find(
     (f) => f.id === podcast.format.toLowerCase()
@@ -149,16 +167,17 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
           {/* Progress */}
           <div className="mt-6">
             <Slider
-              defaultValue={[0]}
+              value={[progressPercent]}
               max={100}
               step={0.1}
               className="cursor-pointer"
+              onValueChange={handleSeek}
             />
             <div className="mt-2 flex justify-between text-xs text-gray-400">
-              <span>0:00</span>
+              <span>{formatDuration(isCurrent)}</span>
               <span>
-                {podcast.durationSeconds
-                  ? formatDuration(podcast.durationSeconds)
+                {isDuration
+                  ? formatDuration(isDuration)
                   : "--:--"}
               </span>
             </div>
