@@ -172,114 +172,36 @@ export function usePlayer() {
 
   const seek = useCallback((time: number) => {
     const audio = getAudio()
-
-    console.log("🎯 SEEK called:", { time, duration: audio.duration, readyState: audio.readyState, paused: audio.paused, currentTimeBefore: audio.currentTime })
-
     const wasPlaying = !audio.paused
 
+    console.log("🎯 SEEK called:", { time, duration: audio.duration, readyState: audio.readyState, currentTime: audio.currentTime })
+
     try {
-      // Activar flag ANTES de cambiar currentTime
+      // Marcar que estamos en un seek
       isSeeking = true
-      console.log("✅ isSeeking flag set to TRUE")
 
-      // Parar reproducción antes de seek
-      audio.pause()
+      // Cambiar el currentTime directamente - el navegador lo maneja
+      audio.currentTime = time
+      console.log("✅ Set audio.currentTime =", time)
 
-      // Helper para hacer el seek cuando el audio esté listo
-      const performSeek = () => {
-        try {
-          audio.currentTime = time
-          console.log("✅ Seek set audio.currentTime to:", audio.currentTime, "readyState:", audio.readyState)
-        } catch (err) {
-          console.error("⚠️ Error setting currentTime:", err)
-        }
-      }
-
-      // Si el audio no está listo (readyState < 2), esperar a que esté listo
-      if (audio.readyState < 2) {
-        console.log("⏳ Audio not ready yet (readyState:", audio.readyState, "), waiting for canplay...")
-        const handleCanPlayForSeek = () => {
-          audio.removeEventListener("canplay", handleCanPlayForSeek)
-          console.log("✅ Audio ready, now seeking...")
-          performSeek()
-        }
-        audio.addEventListener("canplay", handleCanPlayForSeek)
-        // Timeout en caso de que canplay no se dispare
-        setTimeout(() => {
-          audio.removeEventListener("canplay", handleCanPlayForSeek)
-          performSeek()
-        }, 500)
-      } else {
-        // Audio ya está listo, hacer seek inmediatamente
-        performSeek()
-      }
-
-
-      // Actualizar store para trigger del useEffect
+      // Actualizar el store TAMBIÉN con el mismo valor
       store.setCurrentTime(time)
 
-      // Resetear el flag después de 200ms (después de que los eventos se estabilicen)
-      const resetTimeout = setTimeout(() => {
-        isSeeking = false
-        console.log("✅ isSeeking flag reset to FALSE")
-      }, 200)
-
-      // Resume si estaba reproduciendo
+      // Si estaba reproduciendo, reanudar después de un pequeño delay
       if (wasPlaying) {
-        let resumeAttempted = false
-
-        const handleCanPlay = () => {
-          audio.removeEventListener("canplay", handleCanPlay)
-          audio.removeEventListener("loadedmetadata", handleLoadedMetadata)
-          clearTimeout(resetTimeout)
-          clearTimeout(resumeTimeout)
-
-          if (!resumeAttempted) {
-            resumeAttempted = true
-            console.log("🎬 Resume via canplay after seek")
-            audio.play().catch((err) => {
-              console.error("❌ Resume play failed:", err?.message || err)
-            })
-          }
-        }
-
-        const handleLoadedMetadata = () => {
-          audio.removeEventListener("canplay", handleCanPlay)
-          audio.removeEventListener("loadedmetadata", handleLoadedMetadata)
-          clearTimeout(resetTimeout)
-          clearTimeout(resumeTimeout)
-
-          if (!resumeAttempted) {
-            resumeAttempted = true
-            console.log("🎬 Resume via loadedmetadata after seek")
-            audio.play().catch((err) => {
-              console.error("❌ Resume play failed:", err?.message || err)
-            })
-          }
-        }
-
-        // Listeners para distintos escenarios
-        audio.addEventListener("canplay", handleCanPlay)
-        audio.addEventListener("loadedmetadata", handleLoadedMetadata)
-
-        // Fallback si no se disparan eventos en 300ms
-        const resumeTimeout = setTimeout(() => {
-          audio.removeEventListener("canplay", handleCanPlay)
-          audio.removeEventListener("loadedmetadata", handleLoadedMetadata)
-          clearTimeout(resetTimeout)
-
-          if (!resumeAttempted) {
-            resumeAttempted = true
-            console.log("🎬 Resume via timeout after seek")
-            isSeeking = false
-            audio.play().catch((err) => {
-              console.error("❌ Timeout resume failed:", err?.message || err)
-            })
-          }
-        }, 300)
+        setTimeout(() => {
+          audio.play().catch((err) => {
+            console.error("❌ Resume after seek failed:", err)
+          })
+        }, 50)
       }
+
+      // Resetear flag de seek después de 300ms
+      setTimeout(() => {
+        isSeeking = false
+      }, 300)
     } catch (e) {
-      console.error("⚠️ Seek error:", e)
+      console.error("❌ SEEK error:", e)
       isSeeking = false
     }
   }, [])
