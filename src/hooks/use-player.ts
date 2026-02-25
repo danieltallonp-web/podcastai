@@ -96,9 +96,12 @@ export function usePlayer() {
 
     console.log("🎧 Setting audio source:", store.podcast?.audioUrl)
 
-    // Use URL directly - Supabase supports byte-range requests for seeking
-    audio.src = store.podcast!.audioUrl
-    audio.load()
+    // Only set source if it's different (avoid unnecessary resets)
+    if (audio.src !== store.podcast!.audioUrl) {
+      audio.src = store.podcast!.audioUrl
+      // Don't call load() - it resets currentTime to 0
+      // The browser will load on demand
+    }
 
     store.setIsLoading(false)
   }, [store.podcast?.audioUrl])
