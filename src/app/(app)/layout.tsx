@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-64">
         <Topbar onMenuClick={() => setMobileNavOpen(true)} />
 
-        <main className="p-4 pb-32 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-4 pb-40 sm:p-6 sm:pb-40 lg:p-8 lg:pb-40">{children}</main>
       </div>
 
       {/* Persistent audio player */}
