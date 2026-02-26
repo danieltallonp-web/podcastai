@@ -124,7 +124,11 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
               variant="ghost"
               size="icon"
               className="h-10 w-10"
-              onClick={() => usePlayerStore.getState().skipBackward(15)}
+              onClick={() => {
+                const state = usePlayerStore.getState()
+                const newTime = Math.max(0, state.currentTime - 15)
+                seek(newTime)
+              }}
             >
               <SkipBack className="h-5 w-5" />
             </Button>
@@ -145,7 +149,11 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
               variant="ghost"
               size="icon"
               className="h-10 w-10"
-              onClick={() => usePlayerStore.getState().skipForward(15)}
+              onClick={() => {
+                const state = usePlayerStore.getState()
+                const newTime = Math.min(state.currentTime + 15, state.duration)
+                seek(newTime)
+              }}
             >
               <SkipForward className="h-5 w-5" />
             </Button>

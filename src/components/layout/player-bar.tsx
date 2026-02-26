@@ -46,8 +46,6 @@ export function PlayerBar() {
     togglePlay,
     setVolume,
     setPlaybackRate,
-    skipForward,
-    skipBackward,
   } = usePlayerStore()
 
   const { seek } = usePlayer()
@@ -101,7 +99,10 @@ export function PlayerBar() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => skipBackward(15)}
+            onClick={() => {
+              const newTime = Math.max(0, currentTime - 15)
+              seek(newTime)
+            }}
           >
             <SkipBack className="h-4 w-4" />
           </Button>
@@ -123,7 +124,10 @@ export function PlayerBar() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => skipForward(15)}
+            onClick={() => {
+              const newTime = Math.min(currentTime + 15, duration)
+              seek(newTime)
+            }}
           >
             <SkipForward className="h-4 w-4" />
           </Button>
