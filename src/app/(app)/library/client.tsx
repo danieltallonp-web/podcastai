@@ -156,16 +156,17 @@ export function LibraryClient({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {podcasts.map((podcast) => (
-        <div key={podcast.id} className="relative">
+        <div key={podcast.id} className="group flex flex-col">
           <PodcastCard
             {...podcast}
             createdAt={new Date(podcast.createdAt)}
             onPlay={() => handlePlay(podcast)}
             onToggleFavorite={() => toggleFavorite(podcast.id)}
           />
-          <div className="absolute right-2 top-10">
+          {/* Actions row below card - shows on hover */}
+          <div className="mt-2 flex items-center justify-end gap-1 transition-opacity duration-200 opacity-60 group-hover:opacity-100">
             <PodcastActions
               podcastId={podcast.id}
               audioUrl={podcast.audioUrl}

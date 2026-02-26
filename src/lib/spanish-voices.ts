@@ -17,7 +17,7 @@ export interface SpanishVoiceProfile {
 export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
   // Male voices - Using multilingual voices with Spanish optimization
   diego: {
-    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie - Deep, Confident, Energetic
+    voiceId: "ZCh4e9eZSUf41K4cmCEL", // Charlie - Deep, Confident, Energetic
     name: "Diego",
     gender: "male",
     accent: "neutral",
@@ -27,7 +27,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Professional voice with deep, confident tone. Clear and engaging for educational content.",
   },
   pablo: {
-    voiceId: "JBFqnCBsd6RMkjVDRZzb", // George - Warm, Captivating Storyteller
+    voiceId: "Vpv1YgvVd6CHIzOTiTt8", // George - Warm, Captivating Storyteller
     name: "Pablo",
     gender: "male",
     accent: "neutral",
@@ -37,7 +37,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Formal voice with warm resonance. Ideal for educational and professional content.",
   },
   carlos: {
-    voiceId: "CwhRBWXzGAHq8TQ4Fs17", // Roger - Laid-Back, Casual, Resonant
+    voiceId: "PcAHoDMdlTbdDxdz24IK", // Roger - Laid-Back, Casual, Resonant
     name: "Carlos",
     gender: "male",
     accent: "neutral",
@@ -47,7 +47,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Casual and friendly voice. Perfect for conversational and informal podcasts.",
   },
   juan: {
-    voiceId: "TX3LPaxmHKxFdv7VOQHJ", // Liam - Energetic, Social Media Creator
+    voiceId: "5egO01tkUjEzu7xSSE8M", // Liam - Energetic, Social Media Creator
     name: "Juan",
     gender: "male",
     accent: "neutral",
@@ -59,7 +59,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
 
   // Female voices - Using multilingual voices with Spanish optimization
   sofia: {
-    voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice - Clear, Engaging Educator
+    voiceId: "gD1IexrzCvsXPHUuT0s3", // Alice - Clear, Engaging Educator
     name: "Sofía",
     gender: "female",
     accent: "neutral",
@@ -69,7 +69,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Professional voice with clear, engaging delivery. Authoritative for educational content.",
   },
   elena: {
-    voiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah - Mature, Reassuring, Confident
+    voiceId: "RgXx32WYOGrd7gFNifSf", // Sarah - Mature, Reassuring, Confident
     name: "Elena",
     gender: "female",
     accent: "neutral",
@@ -79,7 +79,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Dynamic voice with confident delivery. Perfect for debates and lively discussions.",
   },
   maria: {
-    voiceId: "cgSgspJ2msm6clMCkdW9", // Jessica - Playful, Bright, Warm
+    voiceId: "UOIqAnmS11Reiei1Ytkc", // Jessica - Playful, Bright, Warm
     name: "María",
     gender: "female",
     accent: "neutral",
@@ -89,7 +89,7 @@ export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
     description: "Warm and friendly voice with playful quality. Excellent for storytelling and narratives.",
   },
   ana: {
-    voiceId: "XrExE9yKIg1WjnnlVkGX", // Matilda - Knowledgable, Professional
+    voiceId: "Ir1QNHvhaJXbAGhT50w3", // Matilda - Knowledgable, Professional
     name: "Ana",
     gender: "female",
     accent: "neutral",
