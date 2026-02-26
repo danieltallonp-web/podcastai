@@ -42,6 +42,7 @@ export async function produceAudio(
   }
 
   // Get the public URL for the uploaded file
+  // Public URLs work better for audio streaming with range requests for seeking
   const { data: urlData } = supabase.storage
     .from("podcasts")
     .getPublicUrl(storagePath)
@@ -49,7 +50,7 @@ export async function produceAudio(
   const audioUrl = urlData.publicUrl
 
   if (!audioUrl) {
-    throw new Error("Failed to get public URL for uploaded audio")
+    throw new Error("Failed to get signed URL for uploaded audio")
   }
 
   return {

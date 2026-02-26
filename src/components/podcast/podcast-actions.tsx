@@ -10,9 +10,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Heart, Download, Share2, ListPlus, Plus, Loader2 } from "lucide-react"
+import { Heart, Download, Share2, ListPlus, Plus, Loader2, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { toggleFavorite } from "@/actions/podcast"
+import { toggleFavorite, deletePodcast } from "@/actions/podcast"
 import { getUserPlaylists, createPlaylist, addToPlaylist } from "@/actions/playlist"
 import { toast } from "sonner"
 import type { PodcastStatus } from "@prisma/client"
@@ -37,11 +37,24 @@ export function PodcastActions({
   const [isFav, setIsFav] = useState(initialFavorite)
   const [isPending, startTransition] = useTransition()
   const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [playlists, setPlaylists] = useState<
     Array<{ id: string; name: string; items: Array<{ podcastId: string }> }>
   >([])
   const [newPlaylistName, setNewPlaylistName] = useState("")
   const [loadingPlaylists, setLoadingPlaylists] = useState(false)
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      try {
+        await deletePodcast(podcastId)
+        toast.success("Podcast eliminado")
+        setDeleteOpen(false)
+      } catch {
+        toast.error("Error al eliminar podcast")
+      }
+    })
+  }
 
   const handleFavorite = () => {
     setIsFav((prev) => !prev)
@@ -221,6 +234,52 @@ export function PodcastActions({
       >
         <Share2 className="h-4 w-4 text-gray-400" />
       </Button>
+
+      {/* Delete */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+          >
+            <Trash2 className="h-4 w-4 text-gray-400" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Eliminar podcast</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            ¿Estás seguro de que deseas eliminar &quot;{title}&quot;? Esta acción no se puede deshacer.
+          </p>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteOpen(false)}
+              disabled={isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

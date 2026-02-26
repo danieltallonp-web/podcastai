@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
         if (!userId || !plan) break
 
-        const subscription = session.subscription as Stripe.Subscription
+        const subscription = session.subscription as any
 
         await prisma.user.update({
           where: { id: userId },
@@ -49,9 +49,9 @@ export async function POST(req: Request) {
             stripeSubscriptionId: subscription.id,
             stripeCustomerId: session.customer as string,
             stripePriceId: subscription.items.data[0].price.id,
-            stripeCurrentPeriodEnd: new Date(
-              subscription.current_period_end * 1000
-            ),
+            stripeCurrentPeriodEnd: subscription.current_period_end
+              ? new Date(subscription.current_period_end * 1000)
+              : new Date(),
             podcastsGeneratedThisMonth: 0,
           },
         })
@@ -60,13 +60,14 @@ export async function POST(req: Request) {
       }
 
       case "invoice.paid": {
-        const invoice = event.data.object as Stripe.Invoice
+        const invoice = event.data.object as any
         const subscriptionId = invoice.subscription as string
 
         if (!subscriptionId) break
 
-        const subscription =
-          await stripe.subscriptions.retrieve(subscriptionId)
+        const subscription = (await stripe.subscriptions.retrieve(
+          subscriptionId
+        )) as any
 
         const user = await prisma.user.findFirst({
           where: { stripeSubscriptionId: subscriptionId },
@@ -77,9 +78,9 @@ export async function POST(req: Request) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            stripeCurrentPeriodEnd: new Date(
-              subscription.current_period_end * 1000
-            ),
+            stripeCurrentPeriodEnd: subscription.current_period_end
+              ? new Date(subscription.current_period_end * 1000)
+              : new Date(),
             podcastsGeneratedThisMonth: 0,
           },
         })
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription
+        const subscription = event.data.object as any
         const priceId = subscription.items.data[0].price.id
         const plan = getPlanFromPriceId(priceId)
 
@@ -103,9 +104,9 @@ export async function POST(req: Request) {
           data: {
             plan,
             stripePriceId: priceId,
-            stripeCurrentPeriodEnd: new Date(
-              subscription.current_period_end * 1000
-            ),
+            stripeCurrentPeriodEnd: subscription.current_period_end
+              ? new Date(subscription.current_period_end * 1000)
+              : new Date(),
           },
         })
 

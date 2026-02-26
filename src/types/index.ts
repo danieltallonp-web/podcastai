@@ -105,13 +105,11 @@ export interface ScriptBlock {
 // ==========================================
 
 export interface GenerationProgress {
-  podcastId: string
   status: PodcastStatus
-  progress: number // 0-100
+  step: number
+  totalSteps: number
   message: string
-  currentStep?: string
-  estimatedSecondsRemaining?: number
-  error?: string
+  percentage: number
 }
 
 // ==========================================

@@ -1,8 +1,9 @@
 import { generateSpeech } from "@/lib/elevenlabs"
+import { SPANISH_VOICES, getVoiceForFormat } from "@/lib/spanish-voices"
 import type { PodcastScript, PodcastConfig, ScriptBlock } from "@/types"
 
-// Default ElevenLabs voice ID (Rachel - a clear, neutral voice)
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
+// Default Spanish voice (Diego - professional Spanish speaker)
+const DEFAULT_VOICE_ID = "ByGfLN5mM7p5WHDd0Ev4" // Diego
 
 // Maximum concurrent speech synthesis requests
 // Set to 1 for Free Tier ElevenLabs (max 2 concurrent, minus 1 for safety)
@@ -42,7 +43,7 @@ class Semaphore {
 
 /**
  * Resolves the ElevenLabs voice ID for a given script block.
- * Falls back to default voice if no matching voice is found in config.
+ * Prioritizes configured voices, falls back to Spanish voice profiles.
  */
 function resolveVoiceId(block: ScriptBlock, config: PodcastConfig): string {
   // Try to find the voice in config by voiceId
@@ -54,6 +55,16 @@ function resolveVoiceId(block: ScriptBlock, config: PodcastConfig): string {
   // Fall back to the first voice in config, or the default
   if (config.voices.length > 0 && config.voices[0].voiceId && config.voices[0].voiceId !== "default") {
     return config.voices[0].voiceId
+  }
+
+  // Try to use format-specific Spanish voice
+  try {
+    const spanishVoice = getVoiceForFormat(config.format)
+    if (spanishVoice) {
+      return spanishVoice.voiceId
+    }
+  } catch (e) {
+    // Silently fall back if voice selection fails
   }
 
   return DEFAULT_VOICE_ID

@@ -35,8 +35,9 @@ async function testPipeline() {
     const config: PodcastConfig = {
       prompt:
         "Un debate fascinante de 2 minutos sobre si la inteligencia artificial reemplazará a los programadores",
-      format: "debate",
+      format: "DEBATE",
       language: "es",
+      tone: ["professional"],
       duration: 2,
       voices: [
         {

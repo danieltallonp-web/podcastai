@@ -68,7 +68,7 @@ export async function runPipeline(
     await prisma.podcast.update({
       where: { id: podcastId },
       data: {
-        script: script as unknown as Record<string, unknown>,
+        script: script as any,
         title: script.title,
         description: script.description,
       },
