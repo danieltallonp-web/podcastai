@@ -1,9 +1,7 @@
 "use client"
 
-import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import { usePlayerStore } from "@/stores/player-store"
 import { usePlayer } from "@/hooks/use-player"
@@ -49,7 +47,6 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
   const { podcast: currentPodcast, isPlaying, currentTime, duration, setPodcast, play, pause, togglePlay } =
     usePlayerStore()
   const { seek } = usePlayer()
-  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const isThisPodcastPlaying =
     currentPodcast?.id === podcast.id && isPlaying
@@ -57,16 +54,6 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
   const isDuration = currentPodcast?.id === podcast.id ? duration : (podcast.durationSeconds ?? 0)
   const isCurrent = currentPodcast?.id === podcast.id ? currentTime : 0
   const progressPercent = isDuration > 0 ? (isCurrent / isDuration) * 100 : 0
-
-  const handleSeek = (value: number[]) => {
-    if (isDuration > 0) {
-      const seekTime = (value[0] / 100) * isDuration
-      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current)
-      seekTimeoutRef.current = setTimeout(() => {
-        seek(seekTime)
-      }, 100)
-    }
-  }
 
   const formatInfo = PODCAST_FORMATS.find(
     (f) => f.id === podcast.format.toLowerCase()
@@ -164,16 +151,18 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
             </Button>
           </div>
 
-          {/* Progress */}
+          {/* Progress Bar */}
           <div className="mt-6">
-            <Slider
-              value={[progressPercent]}
-              max={100}
-              step={0.1}
-              className="cursor-pointer"
-              onValueChange={handleSeek}
-            />
-            <div className="mt-2 flex justify-between text-xs text-gray-400">
+            {/* Visual progress bar (read-only) */}
+            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-100"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+
+            {/* Time display */}
+            <div className="mt-3 flex justify-between text-sm text-gray-600 font-medium">
               <span>{formatDuration(isCurrent)}</span>
               <span>
                 {isDuration
@@ -181,6 +170,11 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
                   : "--:--"}
               </span>
             </div>
+
+            {/* Info message */}
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Usa los botones para saltar ⏮ -15s | +15s ⏭
+            </p>
           </div>
 
           {/* Secondary controls */}
