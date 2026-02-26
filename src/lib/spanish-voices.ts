@@ -15,88 +15,88 @@ export interface SpanishVoiceProfile {
 }
 
 export const SPANISH_VOICES: Record<string, SpanishVoiceProfile> = {
-  // Male voices
+  // Male voices - Using multilingual voices with Spanish optimization
   diego: {
-    voiceId: "ByGfLN5mM7p5WHDd0Ev4", // Spanish male, neutral
+    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie - Deep, Confident, Energetic
     name: "Diego",
     gender: "male",
     accent: "neutral",
     personality: ["professional", "clear", "engaging"],
     bestFor: ["MONOLOGUE", "CLASS", "INTERVIEW", "NARRATION"],
     speed: 1.0,
-    description: "Professional Spanish male voice, neutral accent. Clear and engaging for educational content.",
+    description: "Professional voice with deep, confident tone. Clear and engaging for educational content.",
   },
   pablo: {
-    voiceId: "jBpfuIE2acCNq3Kh8isT", // Spanish male, neutral
+    voiceId: "JBFqnCBsd6RMkjVDRZzb", // George - Warm, Captivating Storyteller
     name: "Pablo",
     gender: "male",
     accent: "neutral",
     personality: ["formal", "authoritative", "serious"],
     bestFor: ["CLASS", "INTERVIEW", "ROUNDTABLE", "DEBATE"],
     speed: 0.95,
-    description: "Formal Spanish male voice. Ideal for educational and professional content.",
+    description: "Formal voice with warm resonance. Ideal for educational and professional content.",
   },
   carlos: {
-    voiceId: "nPczCjzI2devNBz1zQrb", // Spanish male, casual
+    voiceId: "CwhRBWXzGAHq8TQ4Fs17", // Roger - Laid-Back, Casual, Resonant
     name: "Carlos",
     gender: "male",
     accent: "neutral",
     personality: ["casual", "friendly", "warm"],
     bestFor: ["CONVERSATION", "INTERVIEW", "ROUNDTABLE", "MONOLOGUE"],
     speed: 1.05,
-    description: "Casual Spanish male voice. Perfect for conversational and informal podcasts.",
+    description: "Casual and friendly voice. Perfect for conversational and informal podcasts.",
   },
   juan: {
-    voiceId: "Er2LC6xLECRZ9HyJTnxQ", // Spanish male, warm
+    voiceId: "TX3LPaxmHKxFdv7VOQHJ", // Liam - Energetic, Social Media Creator
     name: "Juan",
     gender: "male",
-    accent: "spain",
+    accent: "neutral",
     personality: ["warm", "friendly", "expressive"],
     bestFor: ["NARRATION", "CONVERSATION", "INTERVIEW"],
     speed: 1.0,
-    description: "Warm Spanish male voice with Castilian accent. Great for storytelling.",
+    description: "Warm and energetic voice. Great for storytelling and engaging narratives.",
   },
 
-  // Female voices
+  // Female voices - Using multilingual voices with Spanish optimization
   sofia: {
-    voiceId: "ETo6UvWohIHV7PmqVjWH", // Spanish female, neutral
+    voiceId: "Xb7hH8MSUJpSbSDYk0k2", // Alice - Clear, Engaging Educator
     name: "Sofía",
     gender: "female",
     accent: "neutral",
     personality: ["professional", "clear", "engaging"],
     bestFor: ["MONOLOGUE", "CLASS", "INTERVIEW", "ROUNDTABLE"],
     speed: 1.0,
-    description: "Professional Spanish female voice, neutral accent. Clear and authoritative.",
+    description: "Professional voice with clear, engaging delivery. Authoritative for educational content.",
   },
   elena: {
-    voiceId: "r7wLdmG9VyWqYBP8p1zL", // Spanish female, dynamic
+    voiceId: "EXAVITQu4vr4xnSDxMaL", // Sarah - Mature, Reassuring, Confident
     name: "Elena",
     gender: "female",
     accent: "neutral",
     personality: ["dynamic", "energetic", "engaging"],
     bestFor: ["DEBATE", "ROUNDTABLE", "INTERVIEW", "CONVERSATION"],
     speed: 1.05,
-    description: "Dynamic Spanish female voice. Perfect for debates and lively discussions.",
+    description: "Dynamic voice with confident delivery. Perfect for debates and lively discussions.",
   },
   maria: {
-    voiceId: "IKne3meq5aSrNMjlHZhf", // Spanish female, warm
+    voiceId: "cgSgspJ2msm6clMCkdW9", // Jessica - Playful, Bright, Warm
     name: "María",
     gender: "female",
     accent: "neutral",
     personality: ["warm", "friendly", "expressive"],
     bestFor: ["NARRATION", "CONVERSATION", "INTERVIEW"],
     speed: 1.0,
-    description: "Warm Spanish female voice. Excellent for storytelling and narratives.",
+    description: "Warm and friendly voice with playful quality. Excellent for storytelling and narratives.",
   },
   ana: {
-    voiceId: "VR6AewLTigWG4xSOL86w", // Spanish female, casual
+    voiceId: "XrExE9yKIg1WjnnlVkGX", // Matilda - Knowledgable, Professional
     name: "Ana",
     gender: "female",
-    accent: "latin",
+    accent: "neutral",
     personality: ["casual", "friendly", "conversational"],
     bestFor: ["CONVERSATION", "INTERVIEW", "ROUNDTABLE"],
     speed: 1.05,
-    description: "Casual Spanish female voice with Latin American accent. Great for casual conversations.",
+    description: "Friendly professional voice with conversational tone. Great for casual discussions.",
   },
 }
 

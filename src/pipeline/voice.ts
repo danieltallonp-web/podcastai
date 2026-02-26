@@ -2,8 +2,8 @@ import { generateSpeech } from "@/lib/elevenlabs"
 import { SPANISH_VOICES, getVoiceForFormat } from "@/lib/spanish-voices"
 import type { PodcastScript, PodcastConfig, ScriptBlock } from "@/types"
 
-// Default Spanish voice (Diego - professional Spanish speaker)
-const DEFAULT_VOICE_ID = "ByGfLN5mM7p5WHDd0Ev4" // Diego
+// Default voice (Diego profile using Charlie voice ID)
+const DEFAULT_VOICE_ID = "IKne3meq5aSn9XLyUdCD" // Charlie voice for Diego profile
 
 // Maximum concurrent speech synthesis requests
 // Set to 1 for Free Tier ElevenLabs (max 2 concurrent, minus 1 for safety)

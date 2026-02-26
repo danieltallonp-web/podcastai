@@ -44,14 +44,48 @@ export function VoiceSelectorDialog({
 
   const handlePlayPreview = async (voiceId: string) => {
     setPlayingVoiceId(voiceId)
-    // Aquí se podría integrar con la API de previsualización de ElevenLabs
-    setTimeout(() => setPlayingVoiceId(null), 1000)
+    try {
+      // Get the voice name
+      const voice = allVoices.find((v) => v.voiceId === voiceId)
+      const sampleText = `Hola, soy ${voice?.name || "una voz"}. Este es un ejemplo de mi sonido.`
+
+      // Call the TTS API to generate a sample
+      const response = await fetch("/api/tts-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceId, text: sampleText }),
+      })
+
+      if (!response.ok) {
+        console.error("Failed to generate preview")
+        setPlayingVoiceId(null)
+        return
+      }
+
+      // Get audio as blob and play it
+      const audioBlob = await response.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+
+      audio.onended = () => {
+        setPlayingVoiceId(null)
+        URL.revokeObjectURL(audioUrl)
+      }
+
+      audio.play().catch((err) => {
+        console.error("Failed to play audio:", err)
+        setPlayingVoiceId(null)
+      })
+    } catch (error) {
+      console.error("Error playing preview:", error)
+      setPlayingVoiceId(null)
+    }
   }
 
   const VoiceCard = ({ voice }: { voice: SpanishVoiceProfile }) => (
-    <button
+    <div
       onClick={() => handleSelectVoice(voice)}
-      className={`group relative w-full rounded-lg border-2 p-4 text-left transition-all ${
+      className={`group relative w-full rounded-lg border-2 p-4 text-left transition-all cursor-pointer ${
         selectedVoiceId === voice.voiceId
           ? "border-violet-500 bg-violet-50"
           : "border-gray-200 bg-white hover:border-gray-300"
@@ -106,7 +140,7 @@ export function VoiceSelectorDialog({
         <Play className="h-3.5 w-3.5" />
         {playingVoiceId === voice.voiceId ? "Reproduciéndose..." : "Escuchar muestra"}
       </Button>
-    </button>
+    </div>
   )
 
   return (
