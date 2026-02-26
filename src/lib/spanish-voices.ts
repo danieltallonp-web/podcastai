@@ -152,3 +152,75 @@ export function getAllSpanishVoices(): SpanishVoiceProfile[] {
 export function getVoicesByGender(gender: "male" | "female"): SpanishVoiceProfile[] {
   return Object.values(SPANISH_VOICES).filter((v) => v.gender === gender)
 }
+
+/**
+ * Get multiple complementary voices for a format (for multi-speaker podcasts)
+ * Returns an array of voices with alternating genders for better variety
+ */
+export function getVoicesForFormat(format: string, count: number = 2): SpanishVoiceProfile[] {
+  const voicePreferences: Record<string, string[]> = {
+    MONOLOGUE: ["diego"],
+    CONVERSATION: ["carlos", "ana", "juan", "maria"],
+    DEBATE: ["pablo", "elena", "carlos", "sofia"],
+    NARRATION: ["maria", "juan"],
+    CLASS: ["diego", "sofia", "pablo"],
+    ROUNDTABLE: ["sofia", "elena", "carlos", "pablo"],
+    INTERVIEW: ["diego", "sofia", "carlos", "ana"],
+    INTERACTIVE: ["maria", "juan", "ana", "carlos"],
+  }
+
+  const preferred = voicePreferences[format] || ["diego", "sofia"]
+
+  // Get requested number of voices, cycling through the preferred list
+  const result: SpanishVoiceProfile[] = []
+  for (let i = 0; i < count && i < preferred.length; i++) {
+    const voiceKey = preferred[i]
+    const voice = SPANISH_VOICES[voiceKey]
+    if (voice) {
+      result.push(voice)
+    }
+  }
+
+  // If we need more voices and ran out, add voices with alternating gender
+  if (result.length < count) {
+    const lastGender = result[result.length - 1]?.gender
+    const allVoices = Object.values(SPANISH_VOICES)
+    const otherGenderVoices = allVoices.filter(
+      (v) => v.bestFor.includes(format) && v.gender !== lastGender
+    )
+
+    for (let i = result.length; i < count && otherGenderVoices.length > 0; i++) {
+      const idx = (i - result.length) % otherGenderVoices.length
+      const voice = otherGenderVoices[idx]
+      if (!result.some((v) => v.voiceId === voice.voiceId)) {
+        result.push(voice)
+      }
+    }
+  }
+
+  // Fallback: if still not enough, fill with alternating male/female
+  if (result.length < count) {
+    const maleVoices = getVoicesByGender("male")
+    const femaleVoices = getVoicesByGender("female")
+    let maleIdx = 0
+    let femaleIdx = 0
+
+    while (result.length < count) {
+      if (result.length % 2 === 0) {
+        const voice = maleVoices[maleIdx % maleVoices.length]
+        if (!result.some((v) => v.voiceId === voice.voiceId)) {
+          result.push(voice)
+        }
+        maleIdx++
+      } else {
+        const voice = femaleVoices[femaleIdx % femaleVoices.length]
+        if (!result.some((v) => v.voiceId === voice.voiceId)) {
+          result.push(voice)
+        }
+        femaleIdx++
+      }
+    }
+  }
+
+  return result.slice(0, count)
+}

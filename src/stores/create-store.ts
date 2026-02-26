@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { PodcastConfig, VoiceConfig, StoryConfig, SourceInput } from "@/types"
+import { getVoicesForFormat } from "@/lib/spanish-voices"
 
 interface CreateState {
   // Mode
@@ -53,6 +54,7 @@ interface CreateState {
   setMode: (mode: "simple" | "advanced") => void
   setPrompt: (prompt: string) => void
   setFormat: (format: string) => void
+  setFormatWithVoices: (format: string) => void
   setDuration: (duration: number) => void
   setTone: (tone: string) => void
   setLanguage: (language: string) => void
@@ -167,9 +169,36 @@ export const useCreateStore = create<CreateState>()((set, get) => ({
       tone: (config.tone?.[0] ?? get().tone) as string,
       language: config.language ?? get().language,
       numberOfVoices: config.voices?.length ?? get().numberOfVoices,
+      voices: config.voices ?? get().voices,
       musicStyle: config.music ?? get().musicStyle,
       sfxLevel: config.sfx ?? get().sfxLevel,
       audioQuality: config.audioQuality ?? get().audioQuality,
+    })
+  },
+
+  setFormatWithVoices: (format: string) => {
+    // Determine number of voices based on format
+    const voiceCountByFormat: Record<string, number> = {
+      MONOLOGUE: 1,
+      CONVERSATION: 2,
+      DEBATE: 2,
+      NARRATION: 1,
+      CLASS: 1,
+      ROUNDTABLE: 3,
+      INTERVIEW: 2,
+      INTERACTIVE: 2,
+    }
+
+    const voiceCount = voiceCountByFormat[format] ?? 2
+    const voices = getVoicesForFormat(format, voiceCount).map((v) => ({
+      voiceId: v.voiceId,
+      name: v.name,
+    }))
+
+    set({
+      format,
+      numberOfVoices: voiceCount,
+      voices,
     })
   },
 

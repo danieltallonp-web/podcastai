@@ -22,6 +22,7 @@ export function SectionFormat() {
     mixLanguages,
     interactivityLevel,
     setFormat,
+    setFormatWithVoices,
     setAdvancedTones,
     setDuration,
     setLanguage,
@@ -46,7 +47,7 @@ export function SectionFormat() {
           {PODCAST_FORMATS.map((f) => (
             <button
               key={f.id}
-              onClick={() => setFormat(f.id)}
+              onClick={() => setFormatWithVoices(f.id)}
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all",
                 format === f.id

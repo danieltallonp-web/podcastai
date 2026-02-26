@@ -28,6 +28,7 @@ export function SimpleForm() {
     language,
     setPrompt,
     setFormat,
+    setFormatWithVoices,
     setDuration,
     setTone,
     setLanguage,
@@ -93,7 +94,7 @@ export function SimpleForm() {
           {PODCAST_FORMATS.slice(0, 8).map((f) => (
             <button
               key={f.id}
-              onClick={() => setFormat(f.id)}
+              onClick={() => setFormatWithVoices(f.id)}
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all",
                 format === f.id
