@@ -4,8 +4,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Headphones, Sparkles, Zap } from "lucide-react"
 import { motion } from "framer-motion"
+import { useAuth } from "@clerk/nextjs"
 
 export function Hero() {
+  const { isSignedIn } = useAuth()
+  const ctaHref = isSignedIn ? "/create" : "/sign-up"
+
   return (
     <section className="relative overflow-hidden px-4 pb-20 pt-32 sm:px-6 lg:px-8">
       {/* Background gradient */}
@@ -60,8 +64,8 @@ export function Hero() {
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
         >
           <Button asChild size="lg" className="h-12 gap-2 px-8 text-base">
-            <Link href="/sign-up">
-              Crear mi primer podcast
+            <Link href={ctaHref}>
+              {isSignedIn ? "Crear podcast" : "Crear mi primer podcast"}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
