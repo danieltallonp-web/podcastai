@@ -1,191 +1,163 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useCallback } from "react"
 import { usePlayerStore } from "@/stores/player-store"
 
-// Singleton audio element - lives outside React lifecycle
+// ─── Singleton audio element + listeners (lives OUTSIDE React) ───
 let audioElement: HTMLAudioElement | null = null
-let isSeeking = false // Flag para distinguir seeks del usuario vs timeupdate
+let currentSrc = ""
+let isSeeking = false // Module-level flag, shared across all consumers
+let storeUnsubscribe: (() => void) | null = null
 
-function getAudio(): HTMLAudioElement {
+function initAudio(): HTMLAudioElement {
   if (typeof window === "undefined") {
     throw new Error("Audio can only be used in the browser")
   }
-  if (!audioElement) {
-    audioElement = new Audio()
-    audioElement.preload = "auto"
-  }
-  return audioElement
+
+  if (audioElement) return audioElement
+
+  // Create the singleton
+  const audio = new Audio()
+  audio.preload = "auto"
+  audioElement = audio
+
+  // ─── Audio → Store (event listeners, attached ONCE at creation) ───
+
+  audio.addEventListener("timeupdate", () => {
+    if (isSeeking) return
+    usePlayerStore.setState({ currentTime: audio.currentTime })
+  })
+
+  audio.addEventListener("durationchange", () => {
+    if (audio.duration && isFinite(audio.duration)) {
+      usePlayerStore.setState({ duration: audio.duration })
+    }
+  })
+
+  audio.addEventListener("ended", () => {
+    usePlayerStore.setState({ isPlaying: false, currentTime: 0 })
+  })
+
+  audio.addEventListener("canplay", () => {
+    usePlayerStore.setState({ isLoading: false })
+  })
+
+  audio.addEventListener("waiting", () => {
+    usePlayerStore.setState({ isLoading: true })
+  })
+
+  audio.addEventListener("play", () => {
+    usePlayerStore.setState({ isPlaying: true })
+  })
+
+  audio.addEventListener("pause", () => {
+    if (!isSeeking) {
+      usePlayerStore.setState({ isPlaying: false })
+    }
+  })
+
+  // ─── Store → Audio (Zustand subscribe, NO React effects) ───
+
+  let prevState = usePlayerStore.getState()
+
+  // Apply initial volume & rate
+  audio.volume = prevState.volume
+  audio.playbackRate = prevState.playbackRate
+
+  storeUnsubscribe = usePlayerStore.subscribe((state) => {
+    const prev = prevState
+    prevState = state
+
+    // Source changed → load new audio
+    const url = state.podcast?.audioUrl
+    const prevUrl = prev.podcast?.audioUrl
+    if (url && url !== prevUrl) {
+      if (currentSrc !== url) {
+        currentSrc = url
+        audio.src = url
+      }
+    }
+
+    // Play/pause changed
+    if (state.isPlaying !== prev.isPlaying) {
+      if (state.isPlaying && audio.paused && audio.src) {
+        audio.play().catch(() => {
+          usePlayerStore.setState({ isPlaying: false })
+        })
+      } else if (!state.isPlaying && !audio.paused) {
+        audio.pause()
+      }
+    }
+
+    // Volume changed
+    if (state.volume !== prev.volume) {
+      audio.volume = state.volume
+    }
+
+    // Playback rate changed
+    if (state.playbackRate !== prev.playbackRate) {
+      audio.playbackRate = state.playbackRate
+    }
+  })
+
+  return audio
 }
 
+// ─── Seek function (module-level, shared) ───
+function seekAudio(time: number) {
+  const audio = initAudio()
+  if (!audio.src || !isFinite(audio.duration)) return
+
+  const clampedTime = Math.max(0, Math.min(time, audio.duration))
+
+  isSeeking = true
+  audio.currentTime = clampedTime
+  usePlayerStore.setState({ currentTime: clampedTime })
+
+  // Resume playback if it was playing
+  if (usePlayerStore.getState().isPlaying) {
+    audio.play().catch(() => {})
+  }
+
+  // Allow timeupdate to flow again after the browser has settled
+  setTimeout(() => {
+    isSeeking = false
+  }, 250)
+}
+
+/**
+ * usePlayer — thin React wrapper around the module-level audio singleton.
+ *
+ * All audio event listeners and store↔audio sync happen OUTSIDE React,
+ * so React Strict Mode double-invoke has zero effect.
+ */
 export function usePlayer() {
+  // Ensure audio is initialized (safe to call multiple times)
+  if (typeof window !== "undefined") {
+    initAudio()
+  }
+
   const store = usePlayerStore()
-  const initializedRef = useRef(false)
-
-  useEffect(() => {
-    if (initializedRef.current) return
-    initializedRef.current = true
-
-    const audio = getAudio()
-
-    // Sync audio events → store
-    const onTimeUpdate = () => {
-      store.setCurrentTime(audio.currentTime)
-    }
-
-    const onDurationChange = () => {
-      if (audio.duration && isFinite(audio.duration)) {
-        store.setDuration(audio.duration)
-      }
-    }
-
-    const onEnded = () => {
-      store.pause()
-      store.setCurrentTime(0)
-    }
-
-    const onCanPlay = () => {
-      store.setIsLoading(false)
-    }
-
-    const onWaiting = () => {
-      store.setIsLoading(true)
-    }
-
-    const onSeeking = () => {
-      console.log("🔍 SEEKING event fired. audio.currentTime:", audio.currentTime)
-    }
-
-    const onSeeked = () => {
-      console.log("✔️ SEEKED event fired. audio.currentTime:", audio.currentTime)
-    }
-
-    audio.addEventListener("timeupdate", onTimeUpdate)
-    audio.addEventListener("durationchange", onDurationChange)
-    audio.addEventListener("ended", onEnded)
-    audio.addEventListener("canplay", onCanPlay)
-    audio.addEventListener("waiting", onWaiting)
-    audio.addEventListener("seeking", onSeeking)
-    audio.addEventListener("seeked", onSeeked)
-
-    // Fallback interval for progress update if timeupdate doesn't fire frequently
-    const progressInterval = setInterval(() => {
-      if (!audio.paused && audio.src) {
-        store.setCurrentTime(audio.currentTime)
-      }
-    }, 100)
-
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate)
-      audio.removeEventListener("durationchange", onDurationChange)
-      audio.removeEventListener("ended", onEnded)
-      audio.removeEventListener("canplay", onCanPlay)
-      audio.removeEventListener("waiting", onWaiting)
-      audio.removeEventListener("seeking", onSeeking)
-      audio.removeEventListener("seeked", onSeeked)
-      clearInterval(progressInterval)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Sync store changes → audio element
-  // Use direct URL from Supabase (supports HTTP range requests for seeking)
-  useEffect(() => {
-    const audio = getAudio()
-    if (!store.podcast?.audioUrl) return
-
-    console.log("🎧 Setting audio source:", store.podcast?.audioUrl)
-
-    // Only set source if it's different (avoid unnecessary resets)
-    if (audio.src !== store.podcast!.audioUrl) {
-      audio.src = store.podcast!.audioUrl
-      // Don't call load() - it resets currentTime to 0
-      // The browser will load on demand
-    }
-
-    store.setIsLoading(false)
-  }, [store.podcast?.audioUrl])
-
-  useEffect(() => {
-    const audio = getAudio()
-    if (store.isPlaying) {
-      console.log("▶️ Playing. audio.currentTime before play():", audio.currentTime)
-      audio.play().catch((err) => {
-        console.error("❌ audio.play() rejected:", err?.message || err)
-        store.pause()
-      })
-      setTimeout(() => {
-        console.log("▶️ After play() - audio.currentTime:", audio.currentTime)
-      }, 50)
-    } else {
-      console.log("⏸️ Pausing")
-      audio.pause()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.isPlaying])
-
-  useEffect(() => {
-    const audio = getAudio()
-    audio.volume = store.volume
-  }, [store.volume])
-
-  useEffect(() => {
-    const audio = getAudio()
-    audio.playbackRate = store.playbackRate
-  }, [store.playbackRate])
-
-  useEffect(() => {
-    const audio = getAudio()
-    // Si estamos en un seek del usuario, sincroniza siempre (sin threshold de 0.5s)
-    // Si no, solo sincroniza si la diferencia es significativa
-    if (isSeeking) {
-      console.log("🎯 SYNC: Seeking is active, syncing without threshold")
-      audio.currentTime = store.currentTime
-      // No resetear el flag aquí - se resetea en el timeout de seek()
-    } else if (Math.abs(audio.currentTime - store.currentTime) > 0.5) {
-      console.log("🎯 SYNC: Normal timeupdate, difference > 0.5s")
-      audio.currentTime = store.currentTime
-    }
-  }, [store.currentTime])
 
   const seek = useCallback((time: number) => {
-    const audio = getAudio()
-    const wasPlaying = !audio.paused
-
-    console.log("🎯 SEEK called:", { time, duration: audio.duration, readyState: audio.readyState, currentTime: audio.currentTime })
-
-    try {
-      // Marcar que estamos en un seek
-      isSeeking = true
-
-      // Cambiar el currentTime directamente - el navegador lo maneja
-      audio.currentTime = time
-      console.log("✅ Set audio.currentTime =", time)
-
-      // Actualizar el store TAMBIÉN con el mismo valor
-      store.setCurrentTime(time)
-
-      // Si estaba reproduciendo, reanudar después de un pequeño delay
-      if (wasPlaying) {
-        setTimeout(() => {
-          audio.play().catch((err) => {
-            console.error("❌ Resume after seek failed:", err)
-          })
-        }, 50)
-      }
-
-      // Resetear flag de seek después de 300ms
-      setTimeout(() => {
-        isSeeking = false
-      }, 300)
-    } catch (e) {
-      console.error("❌ SEEK error:", e)
-      isSeeking = false
-    }
+    seekAudio(time)
   }, [])
 
   return {
-    ...store,
+    podcast: store.podcast,
+    isPlaying: store.isPlaying,
+    currentTime: store.currentTime,
+    duration: store.duration,
+    volume: store.volume,
+    playbackRate: store.playbackRate,
+    isLoading: store.isLoading,
+    queue: store.queue,
+    // Actions that go through the store (UI toggles)
+    setPodcast: store.setPodcast,
+    togglePlay: store.togglePlay,
+    setVolume: store.setVolume,
+    setPlaybackRate: store.setPlaybackRate,
+    // Direct audio action
     seek,
   }
 }

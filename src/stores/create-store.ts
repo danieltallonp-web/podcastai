@@ -16,7 +16,7 @@ interface CreateState {
   // Advanced mode fields
   detailedPrompt: string
   sources: SourceInput[]
-  researchDepth: "basic" | "moderate" | "deep"
+  researchDepth: "basic" | "intermediate" | "deep"
   contentStructure: "auto" | "chronological" | "thematic" | "qa"
   timePeriod: string
 
@@ -60,7 +60,7 @@ interface CreateState {
   setLanguage: (language: string) => void
   setDetailedPrompt: (prompt: string) => void
   setSources: (sources: SourceInput[]) => void
-  setResearchDepth: (depth: "basic" | "moderate" | "deep") => void
+  setResearchDepth: (depth: "basic" | "intermediate" | "deep") => void
   setContentStructure: (structure: "auto" | "chronological" | "thematic" | "qa") => void
   setTimePeriod: (period: string) => void
   setAdvancedTones: (tones: string[]) => void
@@ -95,7 +95,7 @@ const initialState = {
   language: "es",
   detailedPrompt: "",
   sources: [] as SourceInput[],
-  researchDepth: "moderate" as const,
+  researchDepth: "intermediate" as const,
   contentStructure: "auto" as const,
   timePeriod: "",
   advancedTones: ["casual"],

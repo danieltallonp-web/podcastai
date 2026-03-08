@@ -1,6 +1,8 @@
 // Plantilla de prompt para formato narracion (estilo documental/storytelling)
 // Genera una narrativa inmersiva con ritmo dramatico
 
+import type { VoiceInfo } from "./index"
+
 interface NarrationPromptParams {
   topic: string
   duration: number
@@ -8,10 +10,11 @@ interface NarrationPromptParams {
   language: string
   numberOfVoices: number
   researchContext?: string
+  voices?: VoiceInfo[]
 }
 
 export function getNarrationPrompt(params: NarrationPromptParams): string {
-  const { topic, duration, tone, language, numberOfVoices, researchContext } = params
+  const { topic, duration, tone, language, numberOfVoices, researchContext, voices } = params
 
   const estimatedBlocks = Math.max(8, Math.round(duration * 4))
 
@@ -24,6 +27,13 @@ TONE: ${tone}
 TARGET DURATION: approximately ${duration} minutes
 NUMBER OF VOICES: ${numberOfVoices} (use voiceIndex 0 to ${numberOfVoices - 1})
 ${researchContext ? `\nRESEARCH CONTEXT (use this information as source material):\n${researchContext}\n` : ""}
+
+VOICE ASSIGNMENT:
+${voices && voices.length > 0
+    ? voices.map((v, i) => `- voiceIndex ${i}: "${v.name}" (${v.gender === "female" ? "FEMALE voice — write dialogue appropriate for a woman" : "MALE voice — write dialogue appropriate for a man"}${v.role ? `, role: ${v.role}` : ""})`).join("\n")
+    : `- voiceIndex 0: the primary narrator` + (numberOfVoices > 1 ? `\n` + Array.from({length: numberOfVoices - 1}, (_, i) => `- voiceIndex ${i + 1}: secondary narrator/character ${i + 1}`).join("\n") : "")}
+
+CRITICAL: You MUST use the exact names provided above for each voiceIndex. Each speaker's dialogue must match their assigned gender — do NOT invent new names or swap genders.
 
 NARRATION GUIDELINES:
 - voiceIndex 0 is the PRIMARY NARRATOR: drives the story forward with rich, descriptive language
@@ -54,6 +64,13 @@ Use emotions to guide the narrative delivery:
 - "excited": discoveries, revelations, or action-packed moments
 - "thoughtful": reflection, contemplation, or philosophical observations
 
+NATURALNESS & RHYTHM (very important for audio quality):
+- Use punctuation to control pacing: ellipsis (…) for trailing thoughts, em dashes (—) for abrupt shifts, periods for dramatic stops
+- Vary sentence length dramatically: short punchy sentences for impact ("Y entonces… todo cambió."), longer flowing prose for scene-setting
+- Add "pauseAfterMs" values to control silence between blocks: use 600-1000ms for dramatic pauses between scenes, 300-500ms for normal transitions, 1000-1500ms before major reveals
+- Use the power of rhythm: build momentum with shorter sentences, then release with a long, descriptive passage
+- Avoid overly formal or written-style language; use spoken register that feels cinematic yet human
+
 You MUST respond with valid JSON only, no text before or after. Use this exact structure:
 
 {
@@ -66,12 +83,13 @@ You MUST respond with valid JSON only, no text before or after. Use this exact s
         {
           "voiceIndex": 0,
           "text": "string - the narration text",
-          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful"
+          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful",
+          "pauseAfterMs": number (optional, 200-1500 — silence after this block)
         }
       ]
     }
   ]
 }
 
-Write the entire script in ${language}. Make it sound like a world-class documentary narrator — captivating, authoritative, and deeply human.`
+Write the entire script in ${language}. Make it sound like a world-class documentary narrator — captivating, authoritative, and deeply human. Prioritize spoken rhythm and dramatic pacing.`
 }

@@ -1,6 +1,8 @@
 // Plantilla de prompt para formato monologo (un solo narrador)
 // Genera una exposicion clara con introduccion, desarrollo y conclusion
 
+import type { VoiceInfo } from "./index"
+
 interface MonologuePromptParams {
   topic: string
   duration: number
@@ -8,10 +10,11 @@ interface MonologuePromptParams {
   language: string
   numberOfVoices: number
   researchContext?: string
+  voices?: VoiceInfo[]
 }
 
 export function getMonologuePrompt(params: MonologuePromptParams): string {
-  const { topic, duration, tone, language, numberOfVoices, researchContext } = params
+  const { topic, duration, tone, language, numberOfVoices, researchContext, voices } = params
 
   // En monologo normalmente es 1 voz, pero permitimos mas por si hay cohost breve
   const primaryVoice = 0
@@ -26,6 +29,13 @@ TONE: ${tone}
 TARGET DURATION: approximately ${duration} minutes
 NUMBER OF VOICES: ${numberOfVoices} (primarily voiceIndex ${primaryVoice}${numberOfVoices > 1 ? `, with voiceIndex 1 to ${numberOfVoices - 1} for brief supporting moments` : ""})
 ${researchContext ? `\nRESEARCH CONTEXT (use this information as source material):\n${researchContext}\n` : ""}
+
+VOICE ASSIGNMENT:
+${voices && voices.length > 0
+    ? voices.map((v, i) => `- voiceIndex ${i}: "${v.name}" (${v.gender === "female" ? "FEMALE voice — write dialogue appropriate for a woman" : "MALE voice — write dialogue appropriate for a man"}${v.role ? `, role: ${v.role}` : ""})`).join("\n")
+    : `- voiceIndex ${primaryVoice}: the primary speaker` + (numberOfVoices > 1 ? `\n- voiceIndex 1 to ${numberOfVoices - 1}: brief supporting moments` : "")}
+
+CRITICAL: You MUST use the exact names provided above for each voiceIndex. Each speaker's dialogue must match their assigned gender — do NOT invent new names or swap genders.
 
 MONOLOGUE GUIDELINES:
 - The speaker addresses the audience directly in a clear, engaging manner
@@ -52,6 +62,14 @@ Use these emotions to guide vocal delivery:
 - "excited": for revelations, amazing facts, or building momentum
 - "thoughtful": for philosophical musings, reflections, or nuanced takes
 
+NATURALNESS & RHYTHM (very important for audio quality):
+- Use punctuation to control pacing: ellipsis (…) for trailing thoughts, em dashes (—) for abrupt shifts, commas for brief pauses
+- Include natural interjections and filler phrases: "bueno", "a ver", "mira", "fijaos", "pues", "claro" (adapt to ${language})
+- Vary sentence length: mix short impactful statements with longer flowing explanations
+- Add "pauseAfterMs" values to control silence between blocks: use 400-600ms between ideas, 800-1200ms after rhetorical questions or dramatic reveals, 300ms for quick transitions
+- Avoid overly formal or written-style language; use spoken register appropriate for a solo podcast
+- Include occasional self-corrections or restarts: "Es decir..." / "O sea..." / "Lo que quiero decir es..."
+
 You MUST respond with valid JSON only, no text before or after. Use this exact structure:
 
 {
@@ -64,12 +82,13 @@ You MUST respond with valid JSON only, no text before or after. Use this exact s
         {
           "voiceIndex": 0,
           "text": "string - what the speaker says",
-          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful"
+          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful",
+          "pauseAfterMs": number (optional, 200-1200 — silence after this block)
         }
       ]
     }
   ]
 }
 
-Write the entire script in ${language}. Make it sound like a polished but natural speaker, not a robot reading a script.`
+Write the entire script in ${language}. Make it sound like a polished but natural speaker, not a robot reading a script. Prioritize spoken rhythm and natural flow over perfect grammar.`
 }

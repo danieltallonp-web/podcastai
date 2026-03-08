@@ -18,7 +18,7 @@ const RESEARCH_DEPTH_OPTIONS = [
     icon: Search,
   },
   {
-    id: "moderate",
+    id: "intermediate",
     label: "Moderado",
     description: "Investigacion equilibrada con fuentes",
     icon: BookOpen,
@@ -148,7 +148,7 @@ export function SectionContent() {
         <RadioGroup
           value={researchDepth}
           onValueChange={(val) =>
-            setResearchDepth(val as "basic" | "moderate" | "deep")
+            setResearchDepth(val as "basic" | "intermediate" | "deep")
           }
           className="grid gap-2"
         >

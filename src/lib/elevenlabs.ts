@@ -39,9 +39,9 @@ export async function generateSpeech(params: {
     text,
     voiceId,
     modelId = "eleven_multilingual_v2",
-    stability = 0.5,
+    stability = 0.35,
     similarityBoost = 0.75,
-    style = 0.0,
+    style = 0.4,
     speed = 1.0,
   } = params
 

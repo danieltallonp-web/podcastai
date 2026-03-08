@@ -1,11 +1,25 @@
 import { anthropic } from "@/lib/anthropic"
 import type { PodcastConfig, PodcastScript, ScriptSegment, ScriptBlock } from "@/types"
-import { promptGenerators } from "./prompts"
+import { promptGenerators, type VoiceInfo } from "./prompts"
+import { SPANISH_VOICES } from "@/lib/spanish-voices"
 
 // Mapping from PodcastFormat to prompt generator
 // Uses the promptGenerators map for dynamic format lookup
 // INTERVIEW and INTERACTIVE fall back to conversation (no dedicated template)
 function getPromptForConfig(config: PodcastConfig, researchContext: string): string {
+  // Build voice info array with names and genders from the SPANISH_VOICES registry
+  const voiceInfos: VoiceInfo[] = config.voices.map((v) => {
+    // Look up gender from SPANISH_VOICES by voiceId
+    const spanishVoice = Object.values(SPANISH_VOICES).find(
+      (sv) => sv.voiceId === v.voiceId
+    )
+    return {
+      name: v.name,
+      gender: spanishVoice?.gender ?? "male",
+      role: v.role,
+    }
+  })
+
   const baseParams = {
     topic: config.prompt,
     duration: config.duration,
@@ -13,6 +27,7 @@ function getPromptForConfig(config: PodcastConfig, researchContext: string): str
     language: config.language,
     numberOfVoices: config.voices.length || 1,
     researchContext: researchContext || undefined,
+    voices: voiceInfos.length > 0 ? voiceInfos : undefined,
   }
 
   const key = config.format.toLowerCase()

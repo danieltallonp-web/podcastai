@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import {
@@ -18,7 +18,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { usePlayerStore } from "@/stores/player-store"
 import { usePlayer } from "@/hooks/use-player"
 import { cn } from "@/lib/utils"
 
@@ -31,9 +30,9 @@ function formatDuration(seconds: number): string {
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 export function PlayerBar() {
+  // Local drag state — only used while the user is dragging the slider
   const [isDragging, setIsDragging] = useState(false)
-  const [dragValue, setDragValue] = useState(0)
-  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [dragPercent, setDragPercent] = useState(0)
 
   const {
     podcast,
@@ -46,36 +45,28 @@ export function PlayerBar() {
     togglePlay,
     setVolume,
     setPlaybackRate,
-  } = usePlayerStore()
+    seek,
+  } = usePlayer()
 
-  const { seek } = usePlayer()
-
-  // Handle slider value changes (onValueChange)
-  const handleSliderChange = (value: number[]) => {
-    console.log("📊 onValueChange:", value[0])
-    setIsDragging(true)
-    setDragValue(value[0])
-
-    // Clear any pending seek
-    if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current)
-
-    // Seek after 100ms of no changes (debounce)
-    seekTimeoutRef.current = setTimeout(() => {
-      if (duration > 0) {
-        const seekTime = (value[0] / 100) * duration
-        console.log("✋ Slider release. Seeking to:", seekTime)
-        seek(seekTime)
-      }
-      setIsDragging(false)
-    }, 100)
-  }
-
-  const isVisible = !!podcast
-
-  if (!isVisible) return null
+  if (!podcast) return null
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
-  const displayProgress = isDragging ? dragValue : progressPercent
+  const displayPercent = isDragging ? dragPercent : progressPercent
+
+  // While dragging, just update local state (no seek yet)
+  const handleSliderChange = (value: number[]) => {
+    setIsDragging(true)
+    setDragPercent(value[0])
+  }
+
+  // On commit (mouse/touch release), actually seek
+  const handleSliderCommit = (value: number[]) => {
+    if (duration > 0) {
+      const seekTime = (value[0] / 100) * duration
+      seek(seekTime)
+    }
+    setIsDragging(false)
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur-md lg:left-64">
@@ -88,7 +79,8 @@ export function PlayerBar() {
               {podcast.title}
             </p>
             <p className="truncate text-xs text-gray-500">
-              {formatDuration(currentTime)} / {formatDuration(duration)}
+              {formatDuration(isDragging ? (dragPercent / 100) * duration : currentTime)}{" "}
+              / {formatDuration(duration)}
             </p>
           </div>
         </div>
@@ -99,10 +91,7 @@ export function PlayerBar() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
-              const newTime = Math.max(0, currentTime - 15)
-              seek(newTime)
-            }}
+            onClick={() => seek(Math.max(0, currentTime - 15))}
           >
             <SkipBack className="h-4 w-4" />
           </Button>
@@ -124,10 +113,7 @@ export function PlayerBar() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
-              const newTime = Math.min(currentTime + 15, duration)
-              seek(newTime)
-            }}
+            onClick={() => seek(Math.min(currentTime + 15, duration))}
           >
             <SkipForward className="h-4 w-4" />
           </Button>
@@ -136,11 +122,12 @@ export function PlayerBar() {
         {/* Progress bar */}
         <div className="hidden flex-1 md:block">
           <Slider
-            value={[displayProgress]}
+            value={[displayPercent]}
             max={100}
             step={0.1}
             className="cursor-pointer"
             onValueChange={handleSliderChange}
+            onValueCommit={handleSliderCommit}
           />
         </div>
 

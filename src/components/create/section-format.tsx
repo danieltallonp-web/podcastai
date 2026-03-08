@@ -121,21 +121,32 @@ export function SectionFormat() {
       <div className="space-y-2">
         <Label className="text-sm font-medium">Idioma principal</Label>
         <div className="flex flex-wrap gap-2">
-          {LANGUAGE_OPTIONS.map((l) => (
-            <button
-              key={l.id}
-              onClick={() => setLanguage(l.id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                language === l.id
-                  ? "border-violet-300 bg-violet-50 text-violet-700"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-              )}
-            >
-              <span>{l.flag}</span>
-              {l.label}
-            </button>
-          ))}
+          {LANGUAGE_OPTIONS.map((l) => {
+            const isLocked = l.id !== "es"
+            return (
+              <button
+                key={l.id}
+                onClick={() => !isLocked && setLanguage(l.id)}
+                disabled={isLocked}
+                className={cn(
+                  "relative inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                  isLocked
+                    ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
+                    : language === l.id
+                      ? "border-violet-300 bg-violet-50 text-violet-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                )}
+              >
+                <span className={isLocked ? "grayscale opacity-40" : ""}>{l.flag}</span>
+                {l.label}
+                {isLocked && (
+                  <span className="ml-1 rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
+                    Próximamente
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 

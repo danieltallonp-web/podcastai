@@ -2,6 +2,44 @@ import { generateSpeech } from "@/lib/elevenlabs"
 import { SPANISH_VOICES, getVoiceForFormat } from "@/lib/spanish-voices"
 import type { PodcastScript, PodcastConfig, ScriptBlock } from "@/types"
 
+// Default pause between speaker turns when no pauseAfterMs is specified (ms)
+const DEFAULT_PAUSE_MS = 400
+
+/**
+ * Generates a silent MP3 buffer of the given duration.
+ * Uses a minimal valid MP3 frame (~26ms of silence) repeated to fill the duration.
+ * MPEG1 Layer 3, 128kbps, 44100Hz, mono — a single silent frame is 417 bytes.
+ */
+function generateSilence(durationMs: number): Buffer {
+  if (durationMs <= 0) return Buffer.alloc(0)
+
+  // Minimal silent MP3 frame: MPEG1, Layer 3, 128kbps, 44100Hz, mono
+  // Each frame = 1152 samples at 44100Hz ≈ 26.12ms
+  const silentFrame = Buffer.from(
+    "fffb9004000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
+    "00000000000000000000000000000000000000",
+    "hex"
+  )
+
+  const frameDurationMs = 26.12
+  const frameCount = Math.max(1, Math.ceil(durationMs / frameDurationMs))
+  const frames: Buffer[] = []
+  for (let i = 0; i < frameCount; i++) {
+    frames.push(silentFrame)
+  }
+  return Buffer.concat(frames)
+}
+
 // Default voice (Diego profile using Charlie voice ID)
 const DEFAULT_VOICE_ID = "IKne3meq5aSn9XLyUdCD" // Charlie voice for Diego profile
 
@@ -132,7 +170,7 @@ export async function synthesizeAudio(
 
   await Promise.all(promises)
 
-  // Check for errors and collect successful buffers
+  // Check for errors and collect successful buffers, interleaving silence pauses
   const audioBuffers: Buffer[] = []
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
@@ -140,6 +178,14 @@ export async function synthesizeAudio(
       throw new Error(`Audio synthesis failed for block ${i}: ${result.message}`)
     }
     audioBuffers.push(result)
+
+    // Add silence after this block (except the last one)
+    if (i < results.length - 1) {
+      const pauseMs = blocks[i].pauseAfterMs ?? DEFAULT_PAUSE_MS
+      if (pauseMs > 0) {
+        audioBuffers.push(generateSilence(pauseMs))
+      }
+    }
   }
 
   return audioBuffers

@@ -1,6 +1,8 @@
 // Plantilla de prompt para formato debate (2+ personas con posiciones opuestas)
 // Genera argumentos, contraargumentos y moderacion
 
+import type { VoiceInfo } from "./index"
+
 interface DebatePromptParams {
   topic: string
   duration: number
@@ -8,10 +10,11 @@ interface DebatePromptParams {
   language: string
   numberOfVoices: number
   researchContext?: string
+  voices?: VoiceInfo[]
 }
 
 export function getDebatePrompt(params: DebatePromptParams): string {
-  const { topic, duration, tone, language, numberOfVoices, researchContext } = params
+  const { topic, duration, tone, language, numberOfVoices, researchContext, voices } = params
 
   const estimatedBlocks = Math.max(12, Math.round(duration * 7))
   const hasExplicitModerator = numberOfVoices >= 3
@@ -25,6 +28,15 @@ TONE: ${tone}
 TARGET DURATION: approximately ${duration} minutes
 NUMBER OF SPEAKERS: ${numberOfVoices} (use voiceIndex 0 to ${numberOfVoices - 1})
 ${researchContext ? `\nRESEARCH CONTEXT (use this information as source material):\n${researchContext}\n` : ""}
+
+VOICE ASSIGNMENT:
+${voices && voices.length > 0
+    ? voices.map((v, i) => `- voiceIndex ${i}: "${v.name}" (${v.gender === "female" ? "FEMALE voice — write dialogue appropriate for a woman" : "MALE voice — write dialogue appropriate for a man"}${v.role ? `, role: ${v.role}` : ""})`).join("\n")
+    : hasExplicitModerator
+      ? `- voiceIndex 0: the moderator\n- voiceIndex 1 to ${numberOfVoices - 1}: debaters with distinct positions`
+      : `- voiceIndex 0 and ${numberOfVoices > 1 ? `voiceIndex 1` : "the same speaker presenting both sides"}: represent opposing positions`}
+
+CRITICAL: You MUST use the exact names provided above for each voiceIndex. Each speaker's dialogue must match their assigned gender — do NOT invent new names or swap genders.
 
 DEBATE GUIDELINES:
 ${hasExplicitModerator
@@ -57,6 +69,14 @@ Use these emotions to reflect the debate dynamics:
 - "excited": for passionate defenses or breakthrough moments
 - "thoughtful": for concessions, nuanced points, or reflective responses
 
+NATURALNESS & RHYTHM (very important for audio quality):
+- Use punctuation to control pacing: ellipsis (…) for trailing thoughts, em dashes (—) for abrupt shifts, commas for brief pauses
+- Include natural interjections and filler phrases: "bueno", "a ver", "mira", "oye", "pues", "claro", "vale" (adapt to ${language})
+- Vary sentence length: mix short punchy rebuttals with longer reasoned arguments
+- Add "pauseAfterMs" values to control silence between turns: use 300-500ms for quick exchanges, 600-1000ms after dramatic points or strong arguments, 200ms for rapid back-and-forth
+- Avoid overly formal or written-style language; use spoken register appropriate for a debate podcast
+- Include occasional self-corrections or restarts: "Es decir..." / "O sea..." / "Lo que quiero decir es..."
+
 You MUST respond with valid JSON only, no text before or after. Use this exact structure:
 
 {
@@ -69,12 +89,13 @@ You MUST respond with valid JSON only, no text before or after. Use this exact s
         {
           "voiceIndex": 0,
           "text": "string - what this speaker says",
-          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful"
+          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful",
+          "pauseAfterMs": number (optional, 200-1000 — silence after this block)
         }
       ]
     }
   ]
 }
 
-Write the entire script in ${language}. Make it feel like a real intellectual debate, not a rehearsed script.`
+Write the entire script in ${language}. Make it feel like a real intellectual debate, not a rehearsed script. Prioritize spoken rhythm and natural flow over perfect grammar.`
 }

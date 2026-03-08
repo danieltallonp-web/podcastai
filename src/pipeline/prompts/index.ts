@@ -17,6 +17,13 @@ export {
   getRoundtablePrompt,
 }
 
+// Informacion de voz para pasar a los prompts
+export interface VoiceInfo {
+  name: string
+  gender: "male" | "female"
+  role?: string
+}
+
 // Tipo compartido para los parametros de configuracion de prompts
 export interface PromptParams {
   topic: string
@@ -25,6 +32,7 @@ export interface PromptParams {
   language: string
   numberOfVoices: number
   researchContext?: string
+  voices?: VoiceInfo[]
 }
 
 // Mapa de formatos a sus funciones generadoras para acceso dinamico

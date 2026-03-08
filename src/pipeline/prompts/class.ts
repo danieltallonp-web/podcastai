@@ -1,6 +1,8 @@
 // Plantilla de prompt para formato clase educativa (profesor + ejemplos)
 // Genera una leccion estructurada con analogias, ejemplos y recapitulacion
 
+import type { VoiceInfo } from "./index"
+
 interface ClassPromptParams {
   topic: string
   duration: number
@@ -8,10 +10,11 @@ interface ClassPromptParams {
   language: string
   numberOfVoices: number
   researchContext?: string
+  voices?: VoiceInfo[]
 }
 
 export function getClassPrompt(params: ClassPromptParams): string {
-  const { topic, duration, tone, language, numberOfVoices, researchContext } = params
+  const { topic, duration, tone, language, numberOfVoices, researchContext, voices } = params
 
   const estimatedBlocks = Math.max(10, Math.round(duration * 5))
   const hasStudents = numberOfVoices >= 2
@@ -25,6 +28,13 @@ TONE: ${tone}
 TARGET DURATION: approximately ${duration} minutes
 NUMBER OF VOICES: ${numberOfVoices} (use voiceIndex 0 to ${numberOfVoices - 1})
 ${researchContext ? `\nRESEARCH CONTEXT (use this information as source material):\n${researchContext}\n` : ""}
+
+VOICE ASSIGNMENT:
+${voices && voices.length > 0
+    ? voices.map((v, i) => `- voiceIndex ${i}: "${v.name}" (${v.gender === "female" ? "FEMALE voice — write dialogue appropriate for a woman" : "MALE voice — write dialogue appropriate for a man"}${v.role ? `, role: ${v.role}` : ""})`).join("\n")
+    : `- voiceIndex 0: the teacher/professor` + (hasStudents ? `\n` + Array.from({length: numberOfVoices - 1}, (_, i) => `- voiceIndex ${i + 1}: student ${i + 1}`).join("\n") : "")}
+
+CRITICAL: You MUST use the exact names provided above for each voiceIndex. Each speaker's dialogue must match their assigned gender — do NOT invent new names or swap genders.
 
 EDUCATIONAL GUIDELINES:
 - voiceIndex 0 is the TEACHER/PROFESSOR: knowledgeable, clear, and passionate about making the topic accessible
@@ -57,6 +67,14 @@ Use emotions to match the teaching moment:
 - "excited": for mind-blowing connections, surprising facts, or breakthrough insights
 - "thoughtful": for deeper implications, open questions, or encouraging critical thinking
 
+NATURALNESS & RHYTHM (very important for audio quality):
+- Use punctuation to control pacing: ellipsis (…) for trailing thoughts, em dashes (—) for abrupt shifts, commas for brief pauses
+- Include natural interjections and filler phrases: "bueno", "a ver", "mira", "fijaos", "pues", "claro", "vale" (adapt to ${language})
+- Vary sentence length: mix short punchy explanations with longer detailed ones
+- Add "pauseAfterMs" values to control silence between turns: use 300-500ms for normal exchanges, 600-1000ms after questions or key concepts, 200ms for rapid teacher-student back-and-forth
+- Avoid overly formal or written-style language; use spoken register appropriate for a class
+- Include occasional self-corrections or restarts: "Es decir..." / "O sea..." / "Lo que quiero decir es..."
+
 You MUST respond with valid JSON only, no text before or after. Use this exact structure:
 
 {
@@ -69,12 +87,13 @@ You MUST respond with valid JSON only, no text before or after. Use this exact s
         {
           "voiceIndex": 0,
           "text": "string - what this speaker says",
-          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful"
+          "emotion": "neutral" | "happy" | "serious" | "excited" | "thoughtful",
+          "pauseAfterMs": number (optional, 200-1000 — silence after this block)
         }
       ]
     }
   ]
 }
 
-Write the entire script in ${language}. Make it sound like the best teacher you ever had — someone who makes complex topics feel simple and fascinating.`
+Write the entire script in ${language}. Make it sound like the best teacher you ever had — someone who makes complex topics feel simple and fascinating. Prioritize spoken rhythm and natural flow over perfect grammar.`
 }

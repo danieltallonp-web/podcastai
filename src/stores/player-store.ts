@@ -12,7 +12,7 @@ export interface PlayerPodcast {
 interface PlayerState {
   // Current podcast
   podcast: PlayerPodcast | null
-  // Playback state
+  // Playback state (reflects audio element state)
   isPlaying: boolean
   currentTime: number
   duration: number
@@ -22,18 +22,16 @@ interface PlayerState {
   // Queue
   queue: PlayerPodcast[]
 
-  // Actions
+  // Actions — these ONLY update the store.
+  // The hook (use-player) watches these and applies them to the audio element.
   setPodcast: (podcast: PlayerPodcast) => void
-  play: () => void
-  pause: () => void
+  setIsPlaying: (playing: boolean) => void
   togglePlay: () => void
   setCurrentTime: (time: number) => void
   setDuration: (duration: number) => void
   setVolume: (volume: number) => void
   setPlaybackRate: (rate: number) => void
   setIsLoading: (loading: boolean) => void
-  skipForward: (seconds?: number) => void
-  skipBackward: (seconds?: number) => void
   addToQueue: (podcast: PlayerPodcast) => void
   clearQueue: () => void
   reset: () => void
@@ -41,7 +39,7 @@ interface PlayerState {
 
 export const usePlayerStore = create<PlayerState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       podcast: null,
       isPlaying: false,
       currentTime: 0,
@@ -52,10 +50,9 @@ export const usePlayerStore = create<PlayerState>()(
       queue: [],
 
       setPodcast: (podcast) =>
-        set({ podcast, currentTime: 0, duration: 0, isLoading: true }),
+        set({ podcast, currentTime: 0, duration: 0, isPlaying: false, isLoading: true }),
 
-      play: () => set({ isPlaying: true }),
-      pause: () => set({ isPlaying: false }),
+      setIsPlaying: (playing) => set({ isPlaying: playing }),
       togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
 
       setCurrentTime: (time) => set({ currentTime: time }),
@@ -63,16 +60,6 @@ export const usePlayerStore = create<PlayerState>()(
       setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
       setPlaybackRate: (rate) => set({ playbackRate: rate }),
       setIsLoading: (loading) => set({ isLoading: loading }),
-
-      skipForward: (seconds = 15) =>
-        set((state) => ({
-          currentTime: Math.min(state.currentTime + seconds, state.duration),
-        })),
-
-      skipBackward: (seconds = 15) =>
-        set((state) => ({
-          currentTime: Math.max(state.currentTime - seconds, 0),
-        })),
 
       addToQueue: (podcast) =>
         set((state) => ({ queue: [...state.queue, podcast] })),

@@ -44,7 +44,7 @@ function formatDuration(seconds: number): string {
 }
 
 export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
-  const { podcast: currentPodcast, isPlaying, currentTime, duration, setPodcast, play, pause, togglePlay } =
+  const { podcast: currentPodcast, isPlaying, currentTime, duration, setPodcast, setIsPlaying, togglePlay } =
     usePlayerStore()
   const { seek } = usePlayer()
 
@@ -75,7 +75,7 @@ export function PodcastDetailClient({ podcast }: { podcast: PodcastData }) {
         durationSeconds: podcast.durationSeconds ?? 0,
         format: podcast.format,
       })
-      play()
+      setIsPlaying(true)
     }
   }
 

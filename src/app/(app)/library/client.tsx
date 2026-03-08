@@ -60,7 +60,7 @@ export function LibraryClient({
   playlists,
   variant,
 }: LibraryClientProps) {
-  const { setPodcast, play } = usePlayerStore()
+  const { setPodcast, setIsPlaying } = usePlayerStore()
 
   const handlePlay = (podcast: Podcast) => {
     if (podcast.audioUrl && podcast.status === "READY") {
@@ -71,7 +71,7 @@ export function LibraryClient({
         durationSeconds: podcast.durationSeconds ?? 0,
         format: podcast.format,
       })
-      play()
+      setIsPlaying(true)
     }
   }
 
